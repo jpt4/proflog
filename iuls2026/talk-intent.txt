@@ -1,0 +1,66 @@
+20260512Z
+
+Title: Proflog, its implementation and rationale.
+
+We report on the implementation of Proflog, a logic programming language proposed by Melvin Fitting in "Tableaus for Logic Programming" (1993) [0]. As Prolog evaluates programs via resolution over Horn clauses, Proflog uses tableau proofs over formulas of classical first-order logic with equality. Drawing from Amin's leanTAP [1], Proflog employs Clojure's core.logic subsystem for its proof kernel, and generates a proof object in the course of program evaluation. 
+
+This talk will discuss: the tableau proof procedure; how extending tableaus with the Procedure Call rule yields a programming language; the development of the Proflog implementation; future work, particularly in the context of Autarkic Formal Systems [2].
+
+[0] https://id144254.securedata.net/melvinfitting/bookspapers/pdf/papers/LPTableaus.pdf
+
+[1] https://github.com/namin/leanTAP
+
+[2] https://jpt401.substack.com/p/self-justifying-axiom-systems-and 
+
+Talk structure:
+
+- What is the topic of the talk (Proflog, an implementation of Fitting's Proflog), with examples from working system
+
+- Review tableau proof procedure
+  Compare to Amin's prior work
+
+- Explain Fitting's Procedure Rule extension
+
+- Review of implementation details
+  Identify the exact cross-overs between the paper and the code, and where the code goes beyond or differs from the paper
+  Performance optimizations
+  How to use the system  
+
+- Demonstration of evaluating Fitting's P1 and P2
+
+- Motivation from SJAS, and "what is the computational equivalent of a logical system" - see Notes.
+
+- Future work in context of Autarkic Formal Systems
+
+- References 
+
+- AI disclosure and acknowledgements
+
+AI Disclosure Statement:
+
+Project material created in part using the following AI/ML tools: 
+
+Codex GPT-5.4, 5.5 (OpenAI) 
+
+Claude Opus 4.6, 4.7 (Anthropic)
+
+[Lecture notes: remark on "animate literature".]
+
+Research supported by:
+
+FUTO Fellowship, Summer 2025 - https://futo.tech/
+
+Bloominglabs, Inc - https://bloominglabs.org
+
+Seth Frey, Dept. of Communication, UC Davis - https://communication.ucdavis.edu/people/seth-frey
+
+
+
+Notes:
+
+logic vs relational logic - permissively, a logic programming language encodes programs as logical statements, and evaluates a program by manipulates these statements. This manipulation may be via in principle any algorithm, but a stricter notion of logic programming (as a working designation, "pure logical programming") manipulates the program-encoding logical statements using the procedures prescribed by a particular system of logic (more specific than any formal system, which may includes those not explicitly presented in the form of a logic). To demonstrate this gap, consider a logic programming language that is not a pure logic programming language, because it exposes to the programmer a templating facility, allowing arbitrary string substitution over expressions. There may be a "logic of substitution" which this manipulation instantiates, but this must be demonstrated rather than assumed, and would in any case extend the underlying logical system of the language.
+
+A relational logic programming language encodes programs as relations as its preferred kind of logical statements, and a pure relational logic programming language exposes only those techniques for manipulating relations that have a correspondence to logical operations.
+
+  every other manipulation it performs is the results of  in order to evaluate  to uses a proof procedure as the evaluation method, uses a 
+
