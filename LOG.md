@@ -28,6 +28,9 @@ complete contemporaneous transcript.
   the sample deck's visual frame while replacing the content with a talk on
   Fitting tableaus, Procedure Call, the current Clojure/core.logic
   implementation, P1/P2 demonstrations, SJAS motivation, and future work.
+  Revised the demo section into worked examples with paper-equivalent P1/P2
+  Proflog snippets, concrete `evaluate-case` outputs, and proof-step traces
+  captured from the current fitting-program catalog.
 - Removed the remaining deterministic public-code byte projectors from the SJAS
   profile. Compact and U-Grounding public code reads now pass through
   `sjas-formal-code-byteso`; long system/Group-3 proof evidence is summarized

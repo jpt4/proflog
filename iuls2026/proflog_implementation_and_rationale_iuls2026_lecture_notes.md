@@ -140,35 +140,112 @@ Speaker notes:
 
 - Stress that the proof object is not decorative. It is the artifact that lets the implementation be audited against Fitting's rules and later be encoded for self-justifying axiom-system work.
 
-## 11. Demo I: Fitting P1
+## 11. P1 Program
 
 Slide text:
 
-- even(x) <- x = 0 or exists y.(x = s(y) and odd(y))
-- odd(x)  <- forall y.(even(y) => x != y)
+- Paper-equivalent Proflog:
+- even(x) <-
+-   x = 0 or exists y.(x = s(y) and odd(y))
 
-- Implemented cases:
-- even(0) succeeds; odd(s(0)) succeeds; odd(0) fails.
+- odd(x) <-
+-   forall y.(even(y) => x != y)
 
 Speaker notes:
 
-- This is Fitting's original forall-based even/odd P1 shape, not merely the simplified mutual recursion. In the current catalog it lives in proflog.fitting-programs/p1-program, with direct tests over success and failure cases.
+- This slide turns the P1 demo into a worked example. It is the paper's original forall-based odd clause, rendered in the talk's Proflog notation.
+- Implementation anchor: proflog.fitting-programs/p1-program builds the same structure through the public AST and language compiler.
 
-## 12. Demo II: Fitting P2
+## 12. P1 Output
 
 Slide text:
 
-- win(x) <- exists y.((x = s(y) or x = s(s(y))) and not win(y))
+- Run:
+-   evaluate-case :p1-even-0-succeeds
+-   evaluate-case :p1-odd-1-succeeds
+
+- Results:
+-   even(0)  => :succeeds, root neg-call-guarded-alt
+-   odd(s(0)) => :succeeds, root neg-call
+-   both carry proof-count 1
+
+Speaker notes:
+
+- The output is from `lein run -m proflog.fitting-programs p1-even-0-succeeds p1-odd-1-succeeds ...`.
+- The important fact for the talk is not merely the boolean status. The result includes a proof count, a proof root, and ordered proof-step evidence from `proflog.proof/collect-steps`.
+
+## 13. P1 Proof Traces
+
+Slide text:
+
+- even(0) trace:
+-   neg-call-guarded-alt > guarded-alt > guard-eq
+-   > decompose > guarded-seq-done
+
+- odd(s(0)) trace:
+-   neg-call > witness > conj > eq-step > par-bind
+-   > pos-call > split > free-close > univ > refl-close
+
+Speaker notes:
+
+- Full even(0) proof steps: neg-call-guarded-alt > guarded-alt > guarded-neg-alt-saturated > guarded-scope-done > guard-eq > decompose > guard-saturation-done > guarded-call-seq-done > guarded-seq-done
+- Full odd(s(0)) proof steps: neg-call > witness > conj > eq-step > par-bind > pos-call > split > free-close > witness > conj > eq-step > decompose > args > par-bind > pos-call > univ > split > neg-call-guarded-alt > guarded-alt > guarded-neg-alt-saturated > guarded-scope-done > guard-eq > eq-bind > guard-saturation-done > guarded-call-seq-done > guarded-seq-done > refl-close
+- Read this as the executable tableau trace: negative procedure call, witness/equality work, subsidiary positive calls, branching, and closure evidence.
+
+## 14. P2 Program
+
+Slide text:
+
+- Paper-equivalent Proflog:
+- win(x) <- exists y.
+-   ((x = s(y) or x = s(s(y)))
+-    and not win(y))
 
 - One-clause Nim: remove one or two tokens.
-- The body keeps move logic inline, per Fitting's warning.
-- win(4) succeeds; win(3) fails.
+- Move logic stays inline, per Fitting's warning.
 
 Speaker notes:
 
-- P2 demonstrates recursive classical negation. The implementation keeps the move relation inline because Fitting warns that factoring it into an auxiliary relation changes the program behavior under the Procedure Call discipline.
+- This is Fitting's P2 shape as an executable Proflog clause. The move predicate is not factored into a helper relation because that factoring is a known semantic trap in the paper and in the implementation tests.
+- Implementation anchor: proflog.fitting-programs/p2-program.
 
-## 13. Beyond the Paper
+## 15. P2 Output
+
+Slide text:
+
+- Run:
+-   evaluate-case :p2-win-4-succeeds
+-   evaluate-case :p2-win-3-fails
+
+- Results:
+-   win(4) => :succeeds, root neg-call
+-   win(3) => :fails, root pos-call
+-   both carry proof-count 1
+
+Speaker notes:
+
+- In the query API, success for win(4) means a closed tableau for the negated query. Failure for win(3) means a closed tableau for the positive query.
+- The root tags make that visible: win(4) starts from neg-call, while win(3) starts from pos-call.
+
+## 16. P2 Proof Traces
+
+Slide text:
+
+- win(4) trace:
+-   neg-call > once-univ > split > conj > neq-close
+-   > pos-call > eq-triggered-neg-call > free-close
+
+- win(3) trace:
+-   pos-call > witness > conj > savefml > split
+-   > eq-triggered-neg-call > pos-call > free-close
+
+Speaker notes:
+
+- Full win(4) proof steps: neg-call > once-univ > split > conj > neq-close > decompose > args > eq-bind > pos-call > witness > conj > savefml > split > eq-step > decompose > args > par-bind > eq-triggered-neg-call > once-univ > split > conj > neq-close > decompose > args > decompose > args > eq-bind > pos-call > witness > conj > savefml > split > free-close > free-close > decompose > decompose > decompose > free-close
+- Full win(3) proof steps: pos-call > witness > conj > savefml > split > eq-step > decompose > args > par-bind > eq-triggered-neg-call > once-univ > split > conj > neq-close > decompose > args > decompose > args > eq-bind > pos-call > witness > conj > savefml > split > free-close > free-close > decompose > decompose > decompose > free-close
+- P2 is the compact demonstration that recursive classical negation is being handled as proof search over subsidiary tableaux, not as a Prolog-style negation-as-failure convention.
+
+## 17. Beyond the Paper
 
 Slide text:
 
@@ -181,7 +258,7 @@ Speaker notes:
 
 - Make clear that these are implementation layers around the deductive core. They are useful, but they must remain accountable to the logic. This theme recurs in the SJAS section, where shortcuts become suspect.
 
-## 14. Performance Discipline
+## 18. Performance Discipline
 
 Slide text:
 
@@ -195,7 +272,7 @@ Speaker notes:
 
 - The current development practice separates semantic regressions from deep synthesis and recursive probes. For this talk, the point is that tractability is a real engineering problem, but it should not obscure whether the intended proof relation has been implemented.
 
-## 15. Why SJAS Enters
+## 19. Why SJAS Enters
 
 Slide text:
 
@@ -208,7 +285,7 @@ Speaker notes:
 
 - This is the transition from Proflog as a language implementation to Proflog as an object of proof-theoretic scrutiny. If a proof predicate talks about the deductive apparatus, replacing that apparatus with a host callback must be justified, not assumed harmless.
 
-## 16. SJAS Internalization
+## 20. SJAS Internalization
 
 Slide text:
 
@@ -221,7 +298,7 @@ Speaker notes:
 
 - Summarize the current branch without overclaiming. The project has moved proof predicates away from direct kernel validation and toward arithmetized object-language checks, but full arithmetic internalization is not finished.
 
-## 17. Autarkic Formal Systems
+## 21. Autarkic Formal Systems
 
 Slide text:
 
@@ -234,7 +311,7 @@ Speaker notes:
 
 - Tie the talk back to the broader research program. The computational lesson is that equivalence at the theorem level may be too weak when the system can encode statements about the proof procedure itself.
 
-## 18. References
+## 22. References
 
 Slide text:
 

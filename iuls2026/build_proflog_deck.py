@@ -31,6 +31,127 @@ class Slide:
     notes: tuple[str, ...]
 
 
+P1_EVEN_TRACE = (
+    "neg-call-guarded-alt",
+    "guarded-alt",
+    "guarded-neg-alt-saturated",
+    "guarded-scope-done",
+    "guard-eq",
+    "decompose",
+    "guard-saturation-done",
+    "guarded-call-seq-done",
+    "guarded-seq-done",
+)
+
+P1_ODD_TRACE = (
+    "neg-call",
+    "witness",
+    "conj",
+    "eq-step",
+    "par-bind",
+    "pos-call",
+    "split",
+    "free-close",
+    "witness",
+    "conj",
+    "eq-step",
+    "decompose",
+    "args",
+    "par-bind",
+    "pos-call",
+    "univ",
+    "split",
+    "neg-call-guarded-alt",
+    "guarded-alt",
+    "guarded-neg-alt-saturated",
+    "guarded-scope-done",
+    "guard-eq",
+    "eq-bind",
+    "guard-saturation-done",
+    "guarded-call-seq-done",
+    "guarded-seq-done",
+    "refl-close",
+)
+
+P2_WIN4_TRACE = (
+    "neg-call",
+    "once-univ",
+    "split",
+    "conj",
+    "neq-close",
+    "decompose",
+    "args",
+    "eq-bind",
+    "pos-call",
+    "witness",
+    "conj",
+    "savefml",
+    "split",
+    "eq-step",
+    "decompose",
+    "args",
+    "par-bind",
+    "eq-triggered-neg-call",
+    "once-univ",
+    "split",
+    "conj",
+    "neq-close",
+    "decompose",
+    "args",
+    "decompose",
+    "args",
+    "eq-bind",
+    "pos-call",
+    "witness",
+    "conj",
+    "savefml",
+    "split",
+    "free-close",
+    "free-close",
+    "decompose",
+    "decompose",
+    "decompose",
+    "free-close",
+)
+
+P2_WIN3_TRACE = (
+    "pos-call",
+    "witness",
+    "conj",
+    "savefml",
+    "split",
+    "eq-step",
+    "decompose",
+    "args",
+    "par-bind",
+    "eq-triggered-neg-call",
+    "once-univ",
+    "split",
+    "conj",
+    "neq-close",
+    "decompose",
+    "args",
+    "decompose",
+    "args",
+    "eq-bind",
+    "pos-call",
+    "witness",
+    "conj",
+    "savefml",
+    "split",
+    "free-close",
+    "free-close",
+    "decompose",
+    "decompose",
+    "decompose",
+    "free-close",
+)
+
+
+def trace_line(trace: tuple[str, ...]) -> str:
+    return " > ".join(trace)
+
+
 SLIDES = [
     Slide(
         "Proflog, its implementation and rationale",
@@ -186,35 +307,117 @@ SLIDES = [
         ),
     ),
     Slide(
-        "Demo I: Fitting P1",
+        "P1 Program",
         (
-            "even(x) <- x = 0 or exists y.(x = s(y) and odd(y))",
-            "odd(x)  <- forall y.(even(y) => x != y)",
+            "Paper-equivalent Proflog:",
+            "even(x) <-",
+            "  x = 0 or exists y.(x = s(y) and odd(y))",
             "",
-            "Implemented cases:",
-            "even(0) succeeds; odd(s(0)) succeeds; odd(0) fails.",
+            "odd(x) <-",
+            "  forall y.(even(y) => x != y)",
         ),
         (
-            "This is Fitting's original forall-based even/odd P1 shape, not merely "
-            "the simplified mutual recursion. In the current catalog it lives in "
-            "proflog.fitting-programs/p1-program, with direct tests over success "
-            "and failure cases.",
+            "This slide turns the P1 demo into a worked example. It is the paper's "
+            "original forall-based odd clause, rendered in the talk's Proflog "
+            "notation.",
+            "Implementation anchor: proflog.fitting-programs/p1-program builds the "
+            "same structure through the public AST and language compiler.",
         ),
     ),
     Slide(
-        "Demo II: Fitting P2",
+        "P1 Output",
         (
-            "win(x) <- exists y.((x = s(y) or x = s(s(y))) and not win(y))",
+            "Run:",
+            "  evaluate-case :p1-even-0-succeeds",
+            "  evaluate-case :p1-odd-1-succeeds",
             "",
-            "One-clause Nim: remove one or two tokens.",
-            "The body keeps move logic inline, per Fitting's warning.",
-            "win(4) succeeds; win(3) fails.",
+            "Results:",
+            "  even(0)  => :succeeds, root neg-call-guarded-alt",
+            "  odd(s(0)) => :succeeds, root neg-call",
+            "  both carry proof-count 1",
         ),
         (
-            "P2 demonstrates recursive classical negation. The implementation keeps "
-            "the move relation inline because Fitting warns that factoring it into "
-            "an auxiliary relation changes the program behavior under the Procedure "
-            "Call discipline.",
+            "The output is from `lein run -m proflog.fitting-programs "
+            "p1-even-0-succeeds p1-odd-1-succeeds ...`.",
+            "The important fact for the talk is not merely the boolean status. The "
+            "result includes a proof count, a proof root, and ordered proof-step "
+            "evidence from `proflog.proof/collect-steps`.",
+        ),
+    ),
+    Slide(
+        "P1 Proof Traces",
+        (
+            "even(0) trace:",
+            "  neg-call-guarded-alt > guarded-alt > guard-eq",
+            "  > decompose > guarded-seq-done",
+            "",
+            "odd(s(0)) trace:",
+            "  neg-call > witness > conj > eq-step > par-bind",
+            "  > pos-call > split > free-close > univ > refl-close",
+        ),
+        (
+            "Full even(0) proof steps: " + trace_line(P1_EVEN_TRACE),
+            "Full odd(s(0)) proof steps: " + trace_line(P1_ODD_TRACE),
+            "Read this as the executable tableau trace: negative procedure call, "
+            "witness/equality work, subsidiary positive calls, branching, and "
+            "closure evidence.",
+        ),
+    ),
+    Slide(
+        "P2 Program",
+        (
+            "Paper-equivalent Proflog:",
+            "win(x) <- exists y.",
+            "  ((x = s(y) or x = s(s(y)))",
+            "   and not win(y))",
+            "",
+            "One-clause Nim: remove one or two tokens.",
+            "Move logic stays inline, per Fitting's warning.",
+        ),
+        (
+            "This is Fitting's P2 shape as an executable Proflog clause. The move "
+            "predicate is not factored into a helper relation because that factoring "
+            "is a known semantic trap in the paper and in the implementation tests.",
+            "Implementation anchor: proflog.fitting-programs/p2-program.",
+        ),
+    ),
+    Slide(
+        "P2 Output",
+        (
+            "Run:",
+            "  evaluate-case :p2-win-4-succeeds",
+            "  evaluate-case :p2-win-3-fails",
+            "",
+            "Results:",
+            "  win(4) => :succeeds, root neg-call",
+            "  win(3) => :fails, root pos-call",
+            "  both carry proof-count 1",
+        ),
+        (
+            "In the query API, success for win(4) means a closed tableau for the "
+            "negated query. Failure for win(3) means a closed tableau for the "
+            "positive query.",
+            "The root tags make that visible: win(4) starts from neg-call, while "
+            "win(3) starts from pos-call.",
+        ),
+    ),
+    Slide(
+        "P2 Proof Traces",
+        (
+            "win(4) trace:",
+            "  neg-call > once-univ > split > conj > neq-close",
+            "  > pos-call > eq-triggered-neg-call > free-close",
+            "",
+            "win(3) trace:",
+            "  pos-call > witness > conj > savefml > split",
+            "  > eq-triggered-neg-call > pos-call > free-close",
+        ),
+        (
+            "Full win(4) proof steps: " + trace_line(P2_WIN4_TRACE),
+            "Full win(3) proof steps: " + trace_line(P2_WIN3_TRACE),
+            "P2 is the compact demonstration that recursive classical negation is "
+            "being handled as proof search over subsidiary tableaux, not as a "
+            "Prolog-style negation-as-failure convention.",
         ),
     ),
     Slide(

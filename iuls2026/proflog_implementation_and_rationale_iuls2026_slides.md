@@ -73,30 +73,75 @@ Procedure evidence records pos-call, neg-call, and triggered calls.
 Proof objects are used for tests, diagnostics, and SJAS reflection.
 The implementation is therefore executable proof theory.
 
-## Slide 11: Demo I: Fitting P1
+## Slide 11: P1 Program
 
-even(x) <- x = 0 or exists y.(x = s(y) and odd(y))
-odd(x)  <- forall y.(even(y) => x != y)
+Paper-equivalent Proflog:
+even(x) <-
+  x = 0 or exists y.(x = s(y) and odd(y))
 
-Implemented cases:
-even(0) succeeds; odd(s(0)) succeeds; odd(0) fails.
+odd(x) <-
+  forall y.(even(y) => x != y)
 
-## Slide 12: Demo II: Fitting P2
+## Slide 12: P1 Output
 
-win(x) <- exists y.((x = s(y) or x = s(s(y))) and not win(y))
+Run:
+  evaluate-case :p1-even-0-succeeds
+  evaluate-case :p1-odd-1-succeeds
+
+Results:
+  even(0)  => :succeeds, root neg-call-guarded-alt
+  odd(s(0)) => :succeeds, root neg-call
+  both carry proof-count 1
+
+## Slide 13: P1 Proof Traces
+
+even(0) trace:
+  neg-call-guarded-alt > guarded-alt > guard-eq
+  > decompose > guarded-seq-done
+
+odd(s(0)) trace:
+  neg-call > witness > conj > eq-step > par-bind
+  > pos-call > split > free-close > univ > refl-close
+
+## Slide 14: P2 Program
+
+Paper-equivalent Proflog:
+win(x) <- exists y.
+  ((x = s(y) or x = s(s(y)))
+   and not win(y))
 
 One-clause Nim: remove one or two tokens.
-The body keeps move logic inline, per Fitting's warning.
-win(4) succeeds; win(3) fails.
+Move logic stays inline, per Fitting's warning.
 
-## Slide 13: Beyond the Paper
+## Slide 15: P2 Output
+
+Run:
+  evaluate-case :p2-win-4-succeeds
+  evaluate-case :p2-win-3-fails
+
+Results:
+  win(4) => :succeeds, root neg-call
+  win(3) => :fails, root pos-call
+  both carry proof-count 1
+
+## Slide 16: P2 Proof Traces
+
+win(4) trace:
+  neg-call > once-univ > split > conj > neq-close
+  > pos-call > eq-triggered-neg-call > free-close
+
+win(3) trace:
+  pos-call > witness > conj > savefml > split
+  > eq-triggered-neg-call > pos-call > free-close
+
+## Slide 17: Beyond the Paper
 
 Proof-producing query API with bounded iterative deepening.
 Answer export and residuals for open variables.
 Explicit equality, disequality, and delayed-call machinery.
 Opt-in profiles: Robinson Q, constructor recursion, Willard SJAS.
 
-## Slide 14: Performance Discipline
+## Slide 18: Performance Discipline
 
 core.logic makes the tableau kernel relational but search-sensitive.
 Fast gate: lein test-proflog-fast.
@@ -104,28 +149,28 @@ Extended gate: lein test-proflog-extended.
 Resource-heavy SJAS work uses focused var-by-var timing.
 Performance work is subordinate to proof-rule correctness.
 
-## Slide 15: Why SJAS Enters
+## Slide 19: Why SJAS Enters
 
 Willard-style SJAS asks a system to reason about its own proofs.
 Then implementation details can become mathematically relevant.
 A shortcut through the host kernel may preserve theorem extension.
 But self-reference can depend on proof shape, code size, and closure.
 
-## Slide 16: SJAS Internalization
+## Slide 20: SJAS Internalization
 
 System, theorem, proof, and substitution codes are inspected as bytes.
 Recent work removed host public-code byte projectors.
 tableau-proof and subst-prf now use local proof-check relations.
 Remaining work: more proof constructors, signature coding, tractability.
 
-## Slide 17: Autarkic Formal Systems
+## Slide 21: Autarkic Formal Systems
 
 Question: what parts of a formal system are determined internally?
 Consistency, definability, decidability, interpretation, replication.
 Proflog supplies an executable setting for intensional proof questions.
 SJAS supplies the pressure test: proof machinery must account for itself.
 
-## Slide 18: References
+## Slide 22: References
 
 Fitting, Tableaus for Logic Programming, 1993.
 Amin, leanTAP / alphaleanTAP line.
